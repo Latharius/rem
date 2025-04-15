@@ -80,4 +80,11 @@ export const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
   },
+  deleteButton: {
+    padding: 10,
+    backgroundColor: "#ff4d4d",
+    borderRadius: 5,
+    marginTop: 20,
+    alignItems: "center",
+  },
 });

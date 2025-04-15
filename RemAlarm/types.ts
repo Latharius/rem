@@ -1,6 +1,7 @@
 export type RootStackParamList = {
-  Home: { newAlarm?: Alarm } | undefined;
+  Home: { newAlarm?: Alarm; updatedAlarm?: Alarm; deleteAlarmId?: string } | undefined;
   AddAlarm: undefined;
+  EditAlarm: { alarm: Alarm };
 };
 
 export interface Alarm {

@@ -10,6 +10,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import HomeScreen from './screens/HomeScreen';
 import AddAlarmScreen from './screens/AddAlarmScreen';
+import EditAlarmScreen from './screens/EditAlarmScreen';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -45,6 +46,11 @@ export default function RootLayout() {
           <Stack.Screen 
             name="AddAlarm" 
             component={AddAlarmScreen} 
+            options={{ headerShown: false }} 
+          />
+          <Stack.Screen 
+            name="EditAlarm" 
+            component={EditAlarmScreen} 
             options={{ headerShown: false }} 
           />
         </Stack.Navigator>

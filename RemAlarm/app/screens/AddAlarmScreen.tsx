@@ -33,7 +33,7 @@ const AddAlarmScreen: React.FC = () => {
             repeatDays,
             tone,
         };
-        navigation.navigate('Home', { newAlarm: alarm });
+        navigation.navigate('Home', { updatedAlarm: alarm });
     };
 
     return (
