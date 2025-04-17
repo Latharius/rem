@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, TextInput, TouchableOpacity } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation } from "@react-navigation/native";
@@ -8,6 +8,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '@/types';
 import { tones } from "@/constants/Tones";
 import { Audio } from "expo-av";
+import { playTone, stopTone } from "@/utils/tonePlayer";
 
 type AddAlarmNavigationProp = NativeStackNavigationProp<RootStackParamList, "AddAlarm">;
 const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -18,6 +19,7 @@ const AddAlarmScreen: React.FC = () => {
     const [label, setLabel] = useState("");
     const [tone, setTone] = useState("Default Tone");
     const [repeatDays, setRepeatDays] = useState<boolean[]>(Array(7).fill(false));
+    const [currentSound, setCurrentSound] = useState<Audio.Sound | null>(null);
 
     const toggleDay = (index: number) => {
         const newDays = [...repeatDays];
@@ -26,21 +28,24 @@ const AddAlarmScreen: React.FC = () => {
     };
 
     const saveAlarm = () => {
-        const alarm = {
-            id: Math.random().toString(),
-            time: time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            enabled: true,
-            label,
-            repeatDays,
-            tone,
-        };
-        navigation.navigate('Home', { newAlarm: alarm });
+        stopTone().then(() => {
+            const alarm = {
+                id: Math.random().toString(),
+                time: time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                enabled: true,
+                label,
+                repeatDays,
+                tone,
+            };
+            navigation.navigate('Home', { newAlarm: alarm });
+        });
     };
 
-    const playTone = async (toneFile: any) => {
-        const { sound } = await Audio.Sound.createAsync(toneFile);
-        await sound.playAsync();
-    }
+    useEffect(() => {
+        return () => {
+            stopTone();
+        };
+    }, []);
 
     return (
         <ScrollView contentContainerStyle={styles.container}>

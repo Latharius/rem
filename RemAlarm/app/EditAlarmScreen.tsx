@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
@@ -7,6 +7,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from "@/types";
 import { tones } from "@/constants/Tones";
 import { Audio } from "expo-av";
+import { playTone, stopTone } from "@/utils/tonePlayer";
 
 type EditRouteProp = RouteProp<RootStackParamList, 'EditAlarm'>;
 
@@ -21,6 +22,8 @@ const EditAlarmScreen: React.FC = () => {
   const [label, setLabel] = useState(alarm.label);
   const [tone, setTone] = useState(alarm.tone);
   const [repeatDays, setRepeatDays] = useState(alarm.repeatDays);
+  const [currentSound, setCurrentSound] = useState<Audio.Sound | null>(null);
+  
 
   const toggleDay = (index: number) => {
     const newDays = [...repeatDays];
@@ -29,31 +32,38 @@ const EditAlarmScreen: React.FC = () => {
   };
 
   const saveChanges = () => {
-    const updatedAlarm = {
-      ...alarm,
-      time: time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      label,
-      tone,
-      repeatDays,
-    };
-    navigation.navigate("Home", { updatedAlarm });
+    stopTone().then(() => {
+      const updatedAlarm = {
+        ...alarm,
+        time: time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        label,
+        tone,
+        repeatDays,
+      };
+      navigation.navigate("Home", { updatedAlarm });
+    });
   };
 
   const deleteAlarm = () => {
-    Alert.alert("Delete Alarm", "Are you sure?", [
-      { text: "Cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: () => navigation.navigate("Home", { deleteAlarmId: alarm.id }),
-      },
-    ]);
+    stopTone().then(() => {
+      Alert.alert("Delete Alarm", "Are you sure?", [
+        { text: "Cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            navigation.navigate("Home", { deleteAlarmId: alarm.id });
+          },
+        },
+      ]);
+    });
   };
 
-  const playTone = async (toneFile: any) => {
-    const { sound } = await Audio.Sound.createAsync(toneFile);
-    await sound.playAsync();
-  };
+  useEffect(() => {
+    return () => {
+      stopTone(); // Stop the tone when screen unmounts
+    };
+  }, []);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
