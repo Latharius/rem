@@ -5,6 +5,8 @@ import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { styles } from "@/styles/AddAlarmScreen.styles";
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from "@/types";
+import { tones } from "@/constants/Tones";
+import { Audio } from "expo-av";
 
 type EditRouteProp = RouteProp<RootStackParamList, 'EditAlarm'>;
 
@@ -19,7 +21,6 @@ const EditAlarmScreen: React.FC = () => {
   const [label, setLabel] = useState(alarm.label);
   const [tone, setTone] = useState(alarm.tone);
   const [repeatDays, setRepeatDays] = useState(alarm.repeatDays);
-  const [showPicker, setShowPicker] = useState(false);
 
   const toggleDay = (index: number) => {
     const newDays = [...repeatDays];
@@ -49,26 +50,26 @@ const EditAlarmScreen: React.FC = () => {
     ]);
   };
 
+  const playTone = async (toneFile: any) => {
+    const { sound } = await Audio.Sound.createAsync(toneFile);
+    await sound.playAsync();
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.header}>Edit Alarm</Text>
 
-      <TouchableOpacity onPress={() => setShowPicker(true)} style={styles.pickerButton}>
-        <Text style={styles.pickerText}>{time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
-      </TouchableOpacity>
-
-      {showPicker && (
+      <View style={styles.timePickerContainer}>
         <DateTimePicker
           value={time}
           mode="time"
           is24Hour={false}
           display="spinner"
           onChange={(event, selectedTime) => {
-            setShowPicker(false);
             if (selectedTime) setTime(selectedTime);
           }}
         />
-      )}
+      </View>
 
       <Text style={styles.label}>Repeat</Text>
       <View style={styles.daysContainer}>
@@ -83,9 +84,17 @@ const EditAlarmScreen: React.FC = () => {
       <TextInput style={styles.input} value={label} onChangeText={setLabel} placeholder="Alarm Label" placeholderTextColor="#aaa" />
 
       <Text style={styles.label}>Tone</Text>
-      <TouchableOpacity onPress={() => setTone("New Tone")} style={styles.pickerButton}>
-        <Text style={styles.pickerText}>{tone}</Text>
-      </TouchableOpacity>
+      {tones.map((toneOption, index) => (
+          <TouchableOpacity 
+              key={index} 
+              onPress={() => {setTone(toneOption.name); playTone(toneOption.File)}} 
+              style={[
+                  styles.toneOptionButton, 
+                  tone === toneOption.name && styles.selectedTone,
+                  ]}>
+              <Text style={styles.toneOptionText}>{toneOption.name}</Text>
+          </TouchableOpacity>
+      ))}
 
       <View style={styles.buttonRow}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.cancelButton}>

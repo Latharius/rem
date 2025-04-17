@@ -16,8 +16,6 @@ type HomeScreenParams = {
     deleteAlarmId?: string;
 }
 
-const route = useRoute<RouteProp<{ Home: HomeScreenParams }, 'Home'>>();
-
 const HomeScreen: React.FC = () => {
   const navigation = useNavigation<HomeScreenNavigationProp>();
   const route = useRoute<HomeScreenRouteProp>();

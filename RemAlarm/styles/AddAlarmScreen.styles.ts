@@ -87,4 +87,23 @@ export const styles = StyleSheet.create({
     marginTop: 20,
     alignItems: "center",
   },
+  timePickerContainer: {
+    alignItems: 'center',
+  },
+  toneOptionButton: {
+    padding: 12,
+    marginVertical: 4,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    backgroundColor: '#f9f9f9',
+  },
+  selectedTone: {
+    backgroundColor: '#cce5ff', // light blue highlight
+    borderColor: '#3399ff',
+  },
+  toneOptionText: {
+    fontSize: 16,
+    color: '#333',
+  },
 });

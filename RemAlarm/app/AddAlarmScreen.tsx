@@ -6,6 +6,8 @@ import { styles } from "@/styles/AddAlarmScreen.styles";
 import { ScrollView } from "react-native-gesture-handler";
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '@/types';
+import { tones } from "@/constants/Tones";
+import { Audio } from "expo-av";
 
 type AddAlarmNavigationProp = NativeStackNavigationProp<RootStackParamList, "AddAlarm">;
 const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -13,7 +15,6 @@ const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Fri
 const AddAlarmScreen: React.FC = () => {
     const navigation = useNavigation<AddAlarmNavigationProp>();
     const [time, setTime] = useState(new Date());
-    const [showPicker, setShowPicker] = useState(false);
     const [label, setLabel] = useState("");
     const [tone, setTone] = useState("Default Tone");
     const [repeatDays, setRepeatDays] = useState<boolean[]>(Array(7).fill(false));
@@ -33,29 +34,29 @@ const AddAlarmScreen: React.FC = () => {
             repeatDays,
             tone,
         };
-        navigation.navigate('Home', { updatedAlarm: alarm });
+        navigation.navigate('Home', { newAlarm: alarm });
     };
+
+    const playTone = async (toneFile: any) => {
+        const { sound } = await Audio.Sound.createAsync(toneFile);
+        await sound.playAsync();
+    }
 
     return (
         <ScrollView contentContainerStyle={styles.container}>
-            <TouchableOpacity onPress={() => setShowPicker(true)} style={styles.pickerButton}>
-                <Text style={styles.pickerText}>{time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
-            </TouchableOpacity>
-
-            {showPicker && (
+            <View style={styles.timePickerContainer}>
                 <DateTimePicker
                     value={time}
                     mode="time"
                     is24Hour={false}
                     display="spinner"
                     onChange={(event, selectedTime) => {
-                        setShowPicker(false);
                         if (selectedTime) {
                             setTime(selectedTime);
                         }
                     }}
                 />
-            )}
+            </View>
 
             <Text style={styles.label}>Repeat</Text>
             <View style={styles.daysContainer}>
@@ -76,9 +77,17 @@ const AddAlarmScreen: React.FC = () => {
             />
 
             <Text style={styles.label}>Tone</Text>
-            <TouchableOpacity onPress={() => setTone("New Tone")} style={styles.pickerButton}>
-                <Text style={styles.pickerText}>{tone}</Text>
-            </TouchableOpacity>
+            {tones.map((toneOption, index) => (
+                <TouchableOpacity 
+                    key={index} 
+                    onPress={() => {setTone(toneOption.name); playTone(toneOption.File)}} 
+                    style={[
+                        styles.toneOptionButton, 
+                        tone === toneOption.name && styles.selectedTone,
+                        ]}>
+                    <Text style={styles.toneOptionText}>{toneOption.name}</Text>
+                </TouchableOpacity>
+            ))}
 
             <View style={styles.buttonRow}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.cancelButton}>
