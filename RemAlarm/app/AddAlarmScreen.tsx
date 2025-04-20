@@ -9,6 +9,7 @@ import { RootStackParamList } from '@/types';
 import { tones } from "@/constants/Tones";
 import { Audio } from "expo-av";
 import { playTone, stopTone } from "@/utils/tonePlayer";
+import { insertAlarm } from "@/db";
 
 type AddAlarmNavigationProp = NativeStackNavigationProp<RootStackParamList, "AddAlarm">;
 const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -27,7 +28,7 @@ const AddAlarmScreen: React.FC = () => {
         setRepeatDays(newDays);
     };
 
-    const saveAlarm = () => {
+    const saveAlarm = async () => {
         stopTone().then(() => {
             const alarm = {
                 id: Math.random().toString(),
@@ -37,7 +38,14 @@ const AddAlarmScreen: React.FC = () => {
                 repeatDays,
                 tone,
             };
-            navigation.navigate('Home', { newAlarm: alarm });
+            try {
+                insertAlarm(alarm);
+                console.log('Alarm saved into the database:');
+                navigation.goBack();
+            } catch (error) {
+                console.error('Failed to save alarm:', error);
+
+            }
         });
     };
 

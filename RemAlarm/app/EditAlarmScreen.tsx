@@ -6,8 +6,8 @@ import { styles } from "@/styles/AddAlarmScreen.styles";
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from "@/types";
 import { tones } from "@/constants/Tones";
-import { Audio } from "expo-av";
 import { playTone, stopTone } from "@/utils/tonePlayer";
+import { updateAlarm, deleteAlarmById } from "@/db";
 
 type EditRouteProp = RouteProp<RootStackParamList, 'EditAlarm'>;
 
@@ -18,12 +18,30 @@ const EditAlarmScreen: React.FC = () => {
   const route = useRoute<EditRouteProp>();
   const alarm = route.params.alarm;
 
-  const [time, setTime] = useState(new Date(`1970-01-01T${alarm.time}`));
   const [label, setLabel] = useState(alarm.label);
   const [tone, setTone] = useState(alarm.tone);
   const [repeatDays, setRepeatDays] = useState(alarm.repeatDays);
-  const [currentSound, setCurrentSound] = useState<Audio.Sound | null>(null);
-  
+
+  const createTimeFromAlarm = (alarmTime: string) => {
+    const now = new Date();
+    const [timePart, meridian] = alarmTime.split(" ");
+    const [rawHours, rawMinutes] = timePart.split(":").map(Number);
+
+    let hours = rawHours;
+
+    if (meridian === "PM" && hours !== 12) {
+      hours += 12;
+    }
+    if (meridian === "AM" && hours === 12) {
+      hours = 0;
+    }
+
+    now.setHours(hours);
+    now.setMinutes(rawMinutes);
+    return now;
+  };
+
+  const [time, setTime] = useState(createTimeFromAlarm(alarm.time));
 
   const toggleDay = (index: number) => {
     const newDays = [...repeatDays];
@@ -31,7 +49,7 @@ const EditAlarmScreen: React.FC = () => {
     setRepeatDays(newDays);
   };
 
-  const saveChanges = () => {
+  const saveChanges = async () => {
     stopTone().then(() => {
       const updatedAlarm = {
         ...alarm,
@@ -40,7 +58,12 @@ const EditAlarmScreen: React.FC = () => {
         tone,
         repeatDays,
       };
-      navigation.navigate("Home", { updatedAlarm });
+      try {
+        updateAlarm(updatedAlarm);
+        navigation.goBack();
+      } catch (error) {
+        console.error("Failed to update alarm:", error);
+      }
     });
   };
 
@@ -52,7 +75,12 @@ const EditAlarmScreen: React.FC = () => {
           text: "Delete",
           style: "destructive",
           onPress: async () => {
-            navigation.navigate("Home", { deleteAlarmId: alarm.id });
+            try {
+              deleteAlarmById(alarm.id);
+              navigation.goBack();
+            } catch (error) {
+              console.error("Failed to delete alarm:", error);
+            }
           },
         },
       ]);
