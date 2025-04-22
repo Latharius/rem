@@ -10,6 +10,7 @@ import { tones } from "@/constants/Tones";
 import { Audio } from "expo-av";
 import { playTone, stopTone } from "@/utils/tonePlayer";
 import { insertAlarm } from "@/db";
+import { scheduleAlarmNotification } from "@/utils/notifications";
 
 type AddAlarmNavigationProp = NativeStackNavigationProp<RootStackParamList, "AddAlarm">;
 const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -29,7 +30,10 @@ const AddAlarmScreen: React.FC = () => {
     };
 
     const saveAlarm = async () => {
-        stopTone().then(() => {
+        stopTone().then(async () => {
+            const [hour, minute] = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }).split(":").map(Number);
+            const notificationId = await scheduleAlarmNotification(Math.random().toString(), hour, minute)
+
             const alarm = {
                 id: Math.random().toString(),
                 time: time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -37,6 +41,7 @@ const AddAlarmScreen: React.FC = () => {
                 label,
                 repeatDays,
                 tone,
+                notificationId,
             };
             try {
                 insertAlarm(alarm);

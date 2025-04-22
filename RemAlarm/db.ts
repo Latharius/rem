@@ -123,12 +123,12 @@ export const deleteAlarmById = (id: string) => {
 // Debug function to log all alarms in the database
 export const debugDumpAlarms = () => {
     try {
-      const results = db.getAllSync(`SELECT * FROM alarms;`);
-      console.log('🚨 Alarms Dump:\n' + JSON.stringify(results, null, 2));
+        const results = db.getAllSync(`SELECT * FROM alarms;`);
+        console.log('🚨 Alarms Dump:\n' + JSON.stringify(results, null, 2));
     } catch (error) {
-      console.error('Failed to dump alarms:', error);
+        console.error('Failed to dump alarms:', error);
     }
-  };
+};
 
 // Export the db if needed elsewhere
 export default db;

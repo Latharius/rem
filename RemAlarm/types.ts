@@ -11,4 +11,5 @@ export interface Alarm {
     label: string;
     repeatDays: boolean[];
     tone: string;
+    notificationId?: string;
 }

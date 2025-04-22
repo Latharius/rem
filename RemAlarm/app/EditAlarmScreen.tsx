@@ -8,6 +8,7 @@ import { RootStackParamList } from "@/types";
 import { tones } from "@/constants/Tones";
 import { playTone, stopTone } from "@/utils/tonePlayer";
 import { updateAlarm, deleteAlarmById } from "@/db";
+import { scheduleAlarmNotification, cancelAlarmNotification } from "@/utils/notifications";
 
 type EditRouteProp = RouteProp<RootStackParamList, 'EditAlarm'>;
 
@@ -23,25 +24,19 @@ const EditAlarmScreen: React.FC = () => {
   const [repeatDays, setRepeatDays] = useState(alarm.repeatDays);
 
   const createTimeFromAlarm = (alarmTime: string) => {
-    const now = new Date();
-    const [timePart, meridian] = alarmTime.split(" ");
+    const normalizedTime = alarmTime.replace(/\u202F/g, " "); // replace narrow no-break space with normal space
+    const [timePart, meridian] = normalizedTime.split(" ");
     const [rawHours, rawMinutes] = timePart.split(":").map(Number);
 
     let hours = rawHours;
+    if (meridian === "PM" && hours !== 12) hours += 12;
+    if (meridian === "AM" && hours === 12) hours = 0;
 
-    if (meridian === "PM" && hours !== 12) {
-      hours += 12;
-    }
-    if (meridian === "AM" && hours === 12) {
-      hours = 0;
-    }
-
-    now.setHours(hours);
-    now.setMinutes(rawMinutes);
-    return now;
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, rawMinutes, 0, 0);
   };
 
-  const [time, setTime] = useState(createTimeFromAlarm(alarm.time));
+  const [time, setTime] = useState(() => createTimeFromAlarm(alarm.time));
 
   const toggleDay = (index: number) => {
     const newDays = [...repeatDays];
@@ -49,14 +44,28 @@ const EditAlarmScreen: React.FC = () => {
     setRepeatDays(newDays);
   };
 
+  const formatTime = (date: Date) => {
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    const meridian = hours >= 12 ? "PM" : "AM";
+    const formattedHours = hours % 12 === 0 ? 12 : hours % 12;
+    const formattedMinutes = minutes.toString().padStart(2, '0');
+    return `${formattedHours}:${formattedMinutes} ${meridian}`;
+  };
+
   const saveChanges = async () => {
-    stopTone().then(() => {
+    stopTone().then(async () => {
+      const hour = time.getHours();
+      const minute = time.getMinutes();
+      const notificationId = await scheduleAlarmNotification(Math.random().toString(), hour, minute);
+
       const updatedAlarm = {
         ...alarm,
-        time: time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        time: formatTime(time), // 🛠️ manually formatted time
         label,
         tone,
         repeatDays,
+        notificationId,
       };
       try {
         updateAlarm(updatedAlarm);
@@ -76,6 +85,9 @@ const EditAlarmScreen: React.FC = () => {
           style: "destructive",
           onPress: async () => {
             try {
+              if (alarm.notificationId) {
+                await cancelAlarmNotification(alarm.notificationId);
+              }
               deleteAlarmById(alarm.id);
               navigation.goBack();
             } catch (error) {
@@ -95,8 +107,6 @@ const EditAlarmScreen: React.FC = () => {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.header}>Edit Alarm</Text>
-
       <View style={styles.timePickerContainer}>
         <DateTimePicker
           value={time}
